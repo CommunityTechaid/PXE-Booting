@@ -1,0 +1,10 @@
+[Unit]
+Description=BusyBox HTTP server for serving files for PXE booting
+
+[Service]
+Type=forking
+After=isc-dhcp-server.service
+ExecStart=/usr/bin/busybox httpd -p 10.0.0.1:80 -u tftp:tftp -v -h /srv/netboot/
+
+[Install]
+WantedBy=multi-user.target

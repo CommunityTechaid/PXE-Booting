@@ -1,0 +1,107 @@
+#!ipxe
+
+menu Community TechAid iPXE Booting from Theta (${next-server})
+
+item cta-shredos CTA Secure Wipe
+item --gap --
+item hardwareOS CTA Hardware OS
+item --gap --
+item blancco-img Blancco 
+# item slam-blancco-img SLaM Blancco
+item --gap --
+item eraseit-iso EraseIT
+item --gap -- 
+item --gap -- Fallbacks: use if the above fail
+item fallback-shredos (Fallback) CTA Secure Wipe
+item fallback-blancco Blancco (fallback)
+#item fallback-slam-blancco SLaM Blancco (fallback)
+item --gap --
+item --gap -- Tools
+item partedmagic Parted Magic
+item --gap --
+item --gap -- Tests
+item test CTA Mint Feb '25
+choose wiper
+
+goto ${wiper}
+
+## 2022-07-05: replaced memdisk method with below to enable UEFI booting (memdisk doesn't do EFI)
+:cta-shredos
+kernel http://${next-server}/ShredOS/CTA-ShredOS-mnt/boot/shredos console=tty3 loglevel=3 loadkeys=uk \
+nwipe_options="--method=zero --verify=last --noblank --nousb --nowait --autonuke" \
+lftp="open 10.0.0.1; user $TFTP-USER $TFTP-PASS; cd shredos; mput nwipe_*.txt; mput /usr/output/*.json; exit" \
+get_scripts="open 10.0.0.1; user $TFTP-USER $TFTP-PASS; cd scripts; mget -O /usr/bin/scripts ./*sh; exit" \
+lftp_user="$TFTP-USER" \
+lftp_pass="$TFTP-PASS"
+boot
+
+## 2024-07-24 TC: Added fallback ShredOS
+:fallback-shredos
+kernel http://${next-server}/ShredOS/Fallback-CTA-ShredOS-mnt/boot/shredos console=tty3 loglevel=3 loadkeys=uk nomodeset \
+nwipe_options="--method=zero --verify=last --noblank --nousb --nowait --autonuke" \
+lftp="open 10.0.0.1; user $TFTP-USER $TFTP-PASS; cd shredos; mput nwipe_*.txt"
+boot
+
+## 2024-01-31 TC: Added test version of new ShredOS
+:test-shredos
+kernel http://${next-server}/ShredOS/Test-CTA-ShredOS-mnt/boot/shredos console=tty3 loglevel=3 loadkeys=uk \
+nwipe_options="--method=zero --verify=last --noblank --nousb --nowait --autonuke" \
+lftp="open 10.0.0.1; user $TFTP-USER $TFTP-PASS; cd test-shredos; mput nwipe_*.txt; mput /usr/output/*.json; exit" \
+get_scripts="open 10.0.0.1; user $TFTP-USER $TFTP-PASS; cd scripts; mget -O /usr/bin/scripts ./*sh; exit" \
+lftp_user="$TFTP-USER" \
+lftp_pass="$TFTP-PASS" \
+test_env=yes
+boot
+
+:eraseit-iso
+set base-url http://${next-server}/EraseIT/EraseIT-mnt
+kernel -n EraseIT ${base-url}/live/vmlinuz fetch=http://${next-server}/EraseIT/EraseIT-mnt/live/filesystem.squashfs boot=live toram
+initrd ${base-url}/live/initrd
+boot EraseIT
+
+:fallback-slam-blancco
+initrd Blancco/SLAM-blancco-7.4.0.iso
+chain memdisk iso stack=80000
+
+:fallback-blancco
+initrd Blancco/CTA-blancco-7.4.0.iso
+chain memdisk iso stack=80000
+
+:partedmagic
+kernel http://${next-server}/PartedMagic/bzImage initrd=initrd.img initrd=fu.img initrd=m.img edd=on vga=normal netsrc=wget neturl="http://${next-server}/PartedMagic/pmodules/" netargs="-U pmagicboot"
+initrd http://${next-server}/PartedMagic/initrd.img
+initrd http://${next-server}/PartedMagic/fu.img
+initrd http://${next-server}/PartedMagic/m.img
+boot
+
+:blancco-img
+kernel http://${next-server}/Blancco/CTA-Blancco-mnt/arch/boot/x86_64/vmlinuz-bde-linux vmlinuz-bde-linux archisobasedir=arch archisolabel=BLANCCO archiso_http_srv=${next-server}/Blancco/CTA-Blancco-mnt/ ip=dhcp initrd=config.img initrd=intel-ucode.img memtinitrd=amd-ucode.img oinitrd=initramfs-bde-linux.img est=00 loglevel=0 libata.allow_tpm=1 copytoram=y debug verbose console=tty0 loglevel=3 
+initrd http://${next-server}/Blancco/CTA-Blancco-mnt/arch/boot/intel-ucode.img
+initrd http://${next-server}/Blancco/CTA-Blancco-mnt/arch/boot/amd-ucode.img
+initrd http://${next-server}/Blancco/CTA-Blancco-mnt/arch/boot/config.img
+initrd http://${next-server}/Blancco/CTA-Blancco-mnt/arch/boot/x86_64/initramfs-bde-linux.img
+boot
+
+:slam-blancco-img
+kernel http://${next-server}/Blancco/SLAM-Blancco-mnt/arch/boot/x86_64/vmlinuz-bde-linux
+initrd http://${next-server}/Blancco/SLAM-Blancco-mnt/arch/boot/intel-ucode.img
+initrd http://${next-server}/Blancco/SLAM-Blancco-mnt/arch/boot/amd-ucode.img
+initrd http://${next-server}/Blancco/SLAM-Blancco-mnt/arch/boot/config.img
+initrd http://${next-server}/Blancco/SLAM-Blancco-mnt/arch/boot/x86_64/initramfs-bde-linux.img
+imgargs vmlinuz-bde-linux archisobasedir=arch archiso_http_srv=${next-server}/Blancco/SLAM-Blancco-mnt/ ip=dhcp initrd=config.img initrd=intel-ucode.img memtinitrd=amd-ucode.img oinitrd=initramfs-bde-linux.img est=00 loglevel=0 flr libata.allow_tpm=1
+boot
+
+:hardwareOS
+kernel http://${next-server}/HardwareOS/bzImage \
+lftp_user="$TFTP-USER" \
+lftp_pass="$TFTP-PASS" 
+boot
+
+
+:test
+imgfree
+set kernel-url http://${next-server}/CTA-Mint/CTA-Mint-mnt/casper
+set iso-url http://${next-server}/CTA-Mint/CTAmint-22.1.0-Feb-cinnamon-64bit.iso 
+kernel ${kernel-url}/vmlinuz ip=dhcp netboot=url url=${iso-url} boot=casper ramdisk_size=5000000
+initrd ${kernel-url}/initrd.gz
+boot
