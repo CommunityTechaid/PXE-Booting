@@ -22,9 +22,11 @@ This is a repo for all the various configs needed for the CTA PXE booting enviro
 3. `isc-dhcpd` then points devices at http://10.0.0.1/menu.ipxe.
 4. `busybox` serves http://10.0.0.1/menu.ipxe and devices execute the simple script, presenting a menu to the user.
 5. User selects an OS to boot. The relavent sections point to files served by `busybox`. For example:
-```:hardwareOS
+```ipxe
+:hardwareOS
 kernel http://${next-server}/HardwareOS/bzImage lftp_user="netboot-log" lftp_pass="ThreeInOne!" 
-boot```
+boot
+```
 6. iPXE then loads the files and proceeds to boot them.
 
 ## Setup
