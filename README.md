@@ -10,10 +10,10 @@ This is a repo for all the various configs needed for the CTA PXE booting enviro
 
 ## Services outline
 
-`isc-dhcpd` is set up to act as a DHCP server, pointing iPXE clients at http://10.0.0.1/menu.ipxe, else serve up ipxe.efi to chain load and then end up loading menu.ipxe.
-`tfptd-hpa` listens on :69 to serve ipxe.efi.
-`ipxe.efi` is an EFI executable from the iPXE.org project.
-`busybox` acts as an httpd server on :80 serving up other files required (eg. menu.ipxe).
+- `isc-dhcpd` is set up to act as a DHCP server, pointing iPXE clients at http://10.0.0.1/menu.ipxe, else serve up ipxe.efi to chain load and then end up loading menu.ipxe.
+- `tfptd-hpa` listens on :69 to serve ipxe.efi.
+- `ipxe.efi` is an EFI executable from the iPXE.org project.
+- `busybox` acts as an httpd server on :80 serving up other files required (eg. menu.ipxe).
 
 ## Boot process
 
