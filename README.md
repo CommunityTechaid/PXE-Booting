@@ -31,4 +31,57 @@ boot
 
 ## Setup
 
-TBC
+To set from scratch:
+```bash
+# Install git
+apt install git
+
+# Clone repo with config files in
+git clone https://github.com/CommunityTechaid/PXE-Booting.git
+
+# Install programmes needed
+apt install isc-dhcp-server busybox tftpd-hpa
+
+####
+# isc-dhcp-server
+####
+
+# Copy isc-dhcpd config to correct location
+cp isc-dhcpd.conf /etc/dhcp/dhcpd.conf
+edit /etc/defaults/isc-dhcp-server to only serve on desired NIC
+# Restart isc-dhcp-server service to load correct config
+systemctl restart isc-dhcp-server
+# Enable it so it starts on boot
+systemctl enable isc-dhcp-server
+
+####
+# tftpd-hpa
+####
+
+# Copy tftpd config to correct location
+cp ./tftpd-hpa.conf /etc/default/tftpd-hpa
+# Restart tftp service to load correct config
+systemctl restart tftpd-hpa
+# Enable it to start on boot
+systemctl enable tftpd-hpa
+
+####
+# ipxe files
+####
+
+# Copy ipxe files to location to be served up
+cp ipxe.efi /srv/netboot
+cp menu.ipxe /srv/netboot
+
+####
+# busybox 
+####
+
+# Copy service
+cp BusyBoxHTTP.service /etc/systemd/system
+
+# Reload service files
+systemctl daemon-reload
+# Start and enable the busybox service
+systemctl enable --now BusyBoxHTTP.service
+```
